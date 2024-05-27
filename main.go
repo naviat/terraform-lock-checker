@@ -30,6 +30,12 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+func handleError(err error) {
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+}
+
 func main() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -152,10 +158,10 @@ func handleAzureBlobLocks(containerName string) {
 	}
 
 	// From the Azure portal, get your Storage account blob service URL endpoint.
-	serviceURL := fmt.Sprintf("https://%s.blob.core.windows.net", accountName)
+	serviceURL := fmt.Sprintf("https://%s.blob.core.windows.net/", accountName)
 
 	// Create a client object that wraps the service URL and a request pipeline to make requests.
-	client, err := azblob.NewServiceClientWithSharedKeyCredential(serviceURL, credential, nil)
+	client, err := azblob.NewClientWithSharedKeyCredential(serviceURL, credential, nil)
 	if err != nil {
 		log.Fatalf("Failed to create Azure service client: %v", err)
 	}
@@ -163,7 +169,7 @@ func handleAzureBlobLocks(containerName string) {
 	containerClient := client.NewContainerClient(containerName)
 	pager := containerClient.NewListBlobsFlatPager(&azblob.ListBlobsFlatOptions{})
 
-	var locks []azblob.BlobItem
+	var locks []*azblob.BlobItemInternal
 	for pager.More() {
 		resp, err := pager.NextPage(context.Background())
 		if err != nil {
